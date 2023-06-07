@@ -1,0 +1,226 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta property="og:title" content="線上簽署" />
+        <meta property="og:description" content="鴻圖保險代理人有限公司所有，請勿轉傳無關人士" />
+        <meta property="og:site_name" content="線上簽署" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.1.81/build/pdf.min.js"></script>   
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+        <style>
+            #sig-canvas {
+                width:100%;
+            }
+        </style>
+    </head>
+    <body >
+        <div class="bg-violet-950 h-screen w-full flex justify-center items-center px-2">
+            <div id="sign-div" class="w-full md:w-2/3 flex flex-col text-center pb-6 pt-6 px-2 md:px-6 rounded-md shadow-md bg-[#1e0a42]">
+                <h3 class="text-3xl font-bold text-gray-600 mb-4 text-white">
+                    線上簽名
+                </h3>
+                <h4 class="text-xl font-bold text-gray-600 mb-4 text-white">
+                    請在以下虛線範圍內簽名
+                </h4>
+                <div id="canvas-warp" style="cursor: crosshair;" class="rounded-md w-full border-2 border-zinc-900 border-dotted bg-white">
+                    <canvas id="sig-canvas">您的瀏覽器不支援Canvas</canvas>
+                </div>
+
+                <div class="pt-4 flex items-center space-x-4 w-full">
+                    <button class="flex justify-center items-center w-full text-gray-900 px-4 py-3 rounded-md focus:outline-none text-red-300"  id="sig-clearBtn">
+                      <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> 清除
+                    </button>
+                    <button class="bg-blue-500 flex justify-center items-center w-full text-white px-4 py-3 rounded-md focus:outline-none" id="sig-submitBtn">完成</button>
+                </div>
+            </div>
+            <div id="result-div" class="w-full md:w-2/3 flex flex-col text-center pb-6 pt-6 px-2 md:px-6 rounded-md shadow-md bg-[#1e0a42]" style="display:none;">
+                <h3 class="text-3xl font-bold text-gray-600 mb-4 text-white">
+                    線上簽名
+                </h3>
+                <h4 class="text-xl font-bold text-gray-600 mb-4 text-white">
+                    請在以下虛線範圍內簽名
+                </h4>
+                <div id="canvas-result-warp" class="rounded-md w-full border-2 border-zinc-900 border-dotted bg-white">
+                    <canvas id="result-canvas">您的瀏覽器不支援Canvas</canvas>
+                </div>
+
+                <div class="pt-4 flex items-center space-x-4 w-full">
+                    <button class="flex justify-center items-center w-full text-gray-900 px-4 py-3 rounded-md focus:outline-none text-red-300"  id="sig-reloadBtn">
+                      <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>重新簽名
+                    </button>
+                    <button class="bg-blue-500 flex justify-center items-center w-full text-white px-4 py-3 rounded-md focus:outline-none" id="downloadBtn">下載</button>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+        window.jsPDF = window.jspdf.jsPDF;
+        const initWidth = $("#canvas-warp").width();
+        const initHeight = $("#canvas-warp").height();
+
+        const canvas = new fabric.Canvas('sig-canvas', {
+            width: initWidth,
+            height: initHeight,
+            freeDrawingBrush:{
+                color : "black",
+                width : 10
+            }
+        })
+        var resultCanvas;
+
+
+        $('#sig-reloadBtn').on('click',function(){
+            window.location.reload();
+        });
+
+        $('#downloadBtn').on('click',function(){
+            createPDF();
+        });
+
+        canvas.freeDrawingBrush.width = 10;
+
+
+        const myShadow = {
+            color: 'black',
+            blur: 1,
+            offsetX: 1,
+            offsetY: 1,
+        }
+
+        const clearBtn = document.getElementById('sig-clearBtn');
+        const submitBtn = document.getElementById('sig-submitBtn')
+        
+        const outputPngBtn = document.getElementById('outputPngBtn')
+
+        function clearCanvas() {
+            canvas.clear()
+        }
+
+        function submitSign(){
+            output('png')
+        }
+        
+        function output (formatType) {
+            var dataURL = canvas.toDataURL({
+                format: `image/${formatType}`,
+                top: 0,
+                left: 0,
+                width: $("#canvas-warp").width(),
+                height: $("#canvas-warp").height(),
+                multiplier: 5,
+                quality: 5
+            })
+
+            showResult(dataURL)
+            // const a = document.createElement('a')
+            // a.href = dataURL
+            // a.download = `output.${formatType}`
+            // document.body.appendChild(a)
+            // a.click()
+            // document.body.removeChild(a)
+        }
+
+        clearBtn.addEventListener('click', clearCanvas);
+        submitBtn.addEventListener('click', submitSign);
+        canvas.isDrawingMode = true
+
+        $( window ).on( "resize", function() {
+
+            let newWidth = $("#canvas-warp").width();
+            let newHeight = $("#canvas-warp").height();
+            canvas.setWidth(newWidth);
+            canvas.setHeight(newHeight);
+
+            canvas.getObjects().forEach(function(obj){
+                obj.set({ scaleX: newWidth / initWidth, scaleY: newHeight / initHeight, });
+            });
+
+            canvas.renderAll();
+
+            $('#sign-div').find('.canvas-container, .canvas-container > canvas').width(canvas.width)
+            $('#sign-div').find('.canvas-container, .canvas-container > canvas').height(canvas.height)
+        } );
+
+
+        function showResult(sign_data_url){
+
+            resultCanvas = new fabric.Canvas('result-canvas', {
+                width: $("#canvas-warp").width(),
+                height: $("#canvas-warp").width() * (1025 / 1504),
+                selection:false,
+            });
+            $('#sign-div').hide();
+            $('#result-div').show();
+
+            fabric.Image.fromURL('sign-result.png',function(oImg) {
+                            oImg.set({
+                                left        : 0, 
+                                top         : 0,
+                                selectable  : false,
+                                evented     : false,
+                                hoverCursor : 'default',
+                                crossOrigin: 'anonymous'
+                            });
+
+                            oImg.scaleToWidth($("#canvas-result-warp").width(), false);
+                            resultCanvas.add(oImg);
+
+                            fabric.Image.fromURL(sign_data_url,function(oImg) {
+                                oImg.set({
+                                    left        : resultCanvas.width  * 0.81, 
+                                    top         : resultCanvas.height * 0.79,
+                                    selectable  : false,
+                                    evented     : false,
+                                    hoverCursor : 'default'
+                                });
+                                oImg.scaleToWidth(resultCanvas.width / 9, false);
+                                resultCanvas.add(oImg);
+                            });
+
+                        });
+
+            
+
+        }
+
+        function createPDF(){
+            return new Promise(function (resolve) {
+
+                var dataURL = resultCanvas.toDataURL({
+                    format: `image/png`,
+                    top: 0,
+                    left: 0,
+                    width: resultCanvas.width,
+                    height: resultCanvas.height,
+                    multiplier: 3,
+                    quality: 3,
+                    crossOrigin: 'anonymous'
+                })
+
+                //https://artskydj.github.io/jsPDF/docs/jsPDF.html
+                var doc = new jsPDF({
+                    orientation: "portrait",
+                    format: 'mm',
+                    format: [210,297],
+                    // userUnit: 300,
+                    putOnlyUsedFonts:true,
+                    compress:true,
+                });
+
+
+                doc.addPage();
+                doc.addImage(dataURL, 'PNG', 0, 0, 210, 210 * (1025 / 1504));
+                
+                doc.deletePage(1);//建構時會自動建立第一頁，故刪除
+                doc.save( '請款單(已簽).pdf');
+                resolve('resolved');
+            });
+            
+        }
+
+    </script>
+
+</html>
