@@ -124,12 +124,12 @@ header {
 <body>
   
   <button class="share-button share-ios-button"style="top: 60%;left: 50%;"type="button" title="Share this article">
-    <span>ios Share</span>
+    <span>Share</span>
   </button>
   
-  <button class="share-button share-android-button" style="top: 50%;left: 50%;" type="button" title="Share this article">
+  <!-- <button class="share-button share-android-button" style="top: 50%;left: 50%;" type="button" title="Share this article">
     <span>andriod Share</span>
-  </button>
+  </button> -->
   
 
   <div id="msg">
@@ -145,53 +145,44 @@ ios_btn.addEventListener('click', shareIosFile, false)
 async function shareIosFile(){
   document.getElementById("msg").innerHTML = "on share... wait...";
   const blob = await fetch('test-file.pdf').then(r => r.blob())
-  share(blob)
+  navigatorShare(blob)
 }
-async function share(blob){
+async function navigatorShare(blob){
   const data = {
     files: [
       new File([blob], 'hello-中文檔名測試.pdf', {
-        type: 'application/pdf',//blob.type,
+        type: blob.type,//'application/pdf',//blob.type,
       }),
     ],
   };
 
   try {
-    if (!(navigator.canShare(data))) {
-      document.getElementById("msg").innerHTML = "Can\'t share data.";
+    if (! !(navigator.canShare(data))) {
+      throw "Can\'t share data.";
     };
     await navigator.share(data);
   } catch (err) {
     document.getElementById("msg").innerHTML = "Can\'t share data. " +err.name + ' ,' + err.message + ' , ' + (blob.type||'no type');
-    console.error(err.name, err.message);
+    // console.error(err.name, err.message);
+    copyToClipboard("您的刷卡單：https://short.topspeed.com.tw/JA7PBF\n連結失效時間：2023-06-30 23:59:59");
   }
 }
 
-// creating a file
-android_btn = document.querySelector(".share-android-button")
-android_btn.addEventListener('click', shareAndroidFile, false)
+function copyToClipboard(v) {
 
-async function shareAndroidFile(){
-  document.getElementById("msg").innerHTML = "on share... wait...";
-  let imageResponse = await window.fetch('test-file.pdf');
-  let imageBuffer = await imageResponse.arrayBuffer();
-  let file = new File([imageBuffer], "Googleimage.pdf", {type: "application/pdf"});
-
-  let filesArray = [file];
-  if (navigator.canShare && navigator.canShare({ files: filesArray})) {
-    navigator.share({
-      files: filesArray,
-      title: 'Sharing Files'
-    })
-    .then(() => document.getElementById("msg").innerHTML =  'Shared successfully.')
-    .catch((error) => document.getElementById("msg").innerHTML = 'Sharing failed ' + err.message);
-  } else {
-    document.getElementById("msg").innerHTML =  "Sharing Not supported";
+  try {
+    navigator.clipboard.writeText(v);
+    alert('已將分享文字複製到剪貼簿');
+  } catch (error) {
+    swal({
+      title: "無法自動複製，請手動複製文字後分享",
+      html: v,
+      confirmButtonText: '關閉',
+      allowOutsideClick: false
+    });
   }
+
 }
-
-
-
 
 </script>
 </html>
