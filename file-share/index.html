@@ -171,7 +171,7 @@ async function navigatorShare(blob){
 function copyToClipboard(v) {
 
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(function() {
+    navigator.clipboard.writeText(v).then(function() {
       alert('已將分享文字複製到剪貼簿');
     }, function(err) {
       copyByInput(v)
