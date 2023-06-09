@@ -162,7 +162,7 @@ async function share(blob){
     };
     await navigator.share(data);
   } catch (err) {
-    document.getElementById("msg").innerHTML = "Can\'t share data. " +err.name;
+    document.getElementById("msg").innerHTML = "Can\'t share data. " +err.name + ' ,' + err.message + ' , ' + (blob.type||'no type');
     console.error(err.name, err.message);
   }
 }
