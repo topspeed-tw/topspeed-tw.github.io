@@ -184,16 +184,39 @@ header {
   </svg>
 </body>
 <script>
-  const shareButton = document.querySelector('.share-button');
-  shareButton.onclick = async () => {
-    const response = await fetch("test-file.pdf");
-    const buffer = await response.arrayBuffer();
 
-    const pdf = new File([buffer], "hello-中文檔名測試.pdf", { type: "application/pdf" });
-    const files = [pdf];
 
-    // Share PDF file if supported.
-    if (navigator.canShare({ files })) await navigator.share({ files });
+
+test_btn = document.querySelector(".share-button")
+test_btn.addEventListener('click', shareFile, false)
+
+async function shareFile(){
+  const blob = await fetch('test-file.pdf').then(r => r.blob())
+  const title = "Titulo"
+  const text = "Texto"
+  share(title, text, blob)
+}
+async function share(title, text, blob){
+  console.log(title)
+  const data = {
+    files: [
+      new File([blob], 'hello-中文檔名測試.pdf', {
+        type: blob.type,
+      }),
+    ],
+    title: title,
+    text: text,
   };
+  console.log(data)
+  try {
+    if (!(navigator.canShare(data))) {
+      throw new Error('Can\'t share data.', data);
+    };
+    await navigator.share(data);
+  } catch (err) {
+    console.error(err.name, err.message);
+  }
+}
+
 </script>
 </html>
