@@ -164,21 +164,22 @@ async function navigatorShare(blob){
   } catch (err) {
     document.getElementById("msg").innerHTML = "Can\'t share data. " +err.name + ' ,' + err.message + ' , ' + (blob.type||'no type');
 
-    copyToClipboard("您的刷卡單：https://short.topspeed.com.tw/JA7PBF\n連結失效時間：2023-06-30 23:59:59");
+    copyToClipboard("您的刷卡單：https://short.topspeed.com.tw/JA7PBF，連結失效時間：2023-06-30 23:59:59");
   }
 }
 
 function copyToClipboard(v) {
 
-  if (!navigator.clipboard) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已將分享文字複製到剪貼簿');
+    }, function(err) {
+      copyByInput(v)
+    });
+  }else{
     copyByInput(v)
-    return;
   }
-  navigator.clipboard.writeText(text).then(function() {
-    alert('已將分享文字複製到剪貼簿');
-  }, function(err) {
-    copyByInput(v)
-  });
+
 }
 
 function copyByInput(v){
