@@ -157,7 +157,7 @@ async function navigatorShare(blob){
   };
 
   try {
-    if (! !(navigator.canShare(data))) {
+    if (!(navigator.canShare(data))) {
       throw "Can\'t share data.";
     };
     await navigator.share(data);
