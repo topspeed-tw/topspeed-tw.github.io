@@ -170,24 +170,36 @@ async function navigatorShare(blob){
 
 function copyToClipboard(v) {
 
-  var textArea = document.createElement("input");
-  textArea.type = "text";
-  document.body.appendChild(textArea);
-  textArea.value=v;
-  textArea.select();
-  textArea.setSelectionRange(0, 99999); /* For mobile devices */
-  if (document.execCommand("copy")) {
-    alert('已將分享文字複製到剪貼簿');
-  } else {
-    swal({
-      title: "無法自動複製，請手動複製文字後分享",
-      html: v,
-      confirmButtonText: '關閉',
-      allowOutsideClick: false
-    });
+  if (!navigator.clipboard) {
+    copyByInput(v)
+    return;
   }
+  navigator.clipboard.writeText(text).then(function() {
+    alert('已將分享文字複製到剪貼簿');
+  }, function(err) {
+    copyByInput(v)
+  });
+}
 
-  textArea.remove();
+function copyByInput(v){
+    var textArea = document.createElement("input");
+    textArea.type = "text";
+    document.body.appendChild(textArea);
+    textArea.value=v;
+    textArea.select();
+    textArea.setSelectionRange(0, 99999); /* For mobile devices */
+    if (document.execCommand("copy")) {
+      alert('已將分享文字複製到剪貼簿');
+    } else {
+      swal({
+        title: "無法自動複製，請手動複製文字後分享",
+        html: v,
+        confirmButtonText: '關閉',
+        allowOutsideClick: false
+      });
+    }
+
+    textArea.remove();
 }
 
 </script>
