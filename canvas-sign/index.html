@@ -80,7 +80,7 @@
             createPDF();
         });
 
-        canvas.freeDrawingBrush.width = 10;
+        canvas.freeDrawingBrush.width = 6;
 
 
         const myShadow = {
@@ -220,6 +220,7 @@
                     let fileName = '請款單(已簽).pdf';
                     let UA = navigator.userAgent.toLowerCase();
                     if(/line/i.test(UA)){
+                        alert(UA);
                         location.assign(doc.output('bloburl', { filename: fileName }));
                     }else if (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase())) {
                         window.open(doc.output('bloburl', { filename: fileName }));
