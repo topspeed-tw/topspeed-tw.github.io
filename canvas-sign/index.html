@@ -188,34 +188,41 @@
 
         function createPDF(){
             return new Promise(function (resolve) {
+                alert(navigator.userAgent);
+                try {
+                    var dataURL = resultCanvas.toDataURL({
+                        format: `image/png`,
+                        top: 0,
+                        left: 0,
+                        width: resultCanvas.width,
+                        height: resultCanvas.height,
+                        multiplier: 3,
+                        quality: 3,
+                        crossOrigin: 'anonymous'
+                    })
 
-                var dataURL = resultCanvas.toDataURL({
-                    format: `image/png`,
-                    top: 0,
-                    left: 0,
-                    width: resultCanvas.width,
-                    height: resultCanvas.height,
-                    multiplier: 3,
-                    quality: 3,
-                    crossOrigin: 'anonymous'
-                })
-
-                //https://artskydj.github.io/jsPDF/docs/jsPDF.html
-                var doc = new jsPDF({
-                    orientation: "portrait",
-                    format: 'mm',
-                    format: [210,297],
-                    // userUnit: 300,
-                    putOnlyUsedFonts:true,
-                    compress:true,
-                });
+                    //https://artskydj.github.io/jsPDF/docs/jsPDF.html
+                    var doc = new jsPDF({
+                        orientation: "portrait",
+                        format: 'mm',
+                        format: [210,297],
+                        // userUnit: 300,
+                        putOnlyUsedFonts:true,
+                        compress:true,
+                    });
 
 
-                doc.addPage();
-                doc.addImage(dataURL, 'PNG', 0, 0, 210, 210 * (1025 / 1504));
-                
-                doc.deletePage(1);//建構時會自動建立第一頁，故刪除
-                doc.save( '請款單(已簽).pdf');
+                    doc.addPage();
+                    doc.addImage(dataURL, 'PNG', 0, 0, 210, 210 * (1025 / 1504));
+                    
+                    doc.deletePage(1);//建構時會自動建立第一頁，故刪除
+
+
+                    doc.save( '請款單(已簽).pdf');
+                } catch (error) {
+                    alert(error.message)
+                }
+
                 resolve('resolved');
             });
             
