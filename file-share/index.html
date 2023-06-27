@@ -213,8 +213,10 @@ text_btn.addEventListener('click', shareText, false)
 async function shareText(){
   document.getElementById("msg").innerHTML = "on share text... wait...";
   await navigator.share({
-      text: "BBB-987 要保書.pdf 線上簽署",
-      url: "https://www.topspeed.com.tw/",
+      text:  `親愛的客戶您好： \n
+              提供 車牌號(BBB-789) 要保書 \n
+              請您點選下方連結進行要保書簽署。如有任何問題，請洽詢您的保險服務人員。 \n
+              https://topspeed-tw.github.io/canvas-sign/`
   });
 }
 
