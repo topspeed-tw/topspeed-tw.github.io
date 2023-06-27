@@ -124,9 +124,12 @@ header {
 <body>
   
   <button class="share-button share-ios-button"style="top: 60%;left: 50%;"type="button" title="Share this article">
-    <span>Share</span>
+    <span>Share-file</span>
   </button>
-  
+
+  <button class="share-button share-text-button"style="top: 50%;left: 50%;"type="button" title="Share this article">
+    <span>Share-text</span>
+  </button>
   <!-- <button class="share-button share-android-button" style="top: 50%;left: 50%;" type="button" title="Share this article">
     <span>andriod Share</span>
   </button> -->
@@ -201,6 +204,19 @@ function copyByInput(v){
     }
 
     textArea.remove();
+}
+
+
+text_btn = document.querySelector(".share-text-button")
+text_btn.addEventListener('click', shareText, false)
+
+async function shareText(){
+  document.getElementById("msg").innerHTML = "on share text... wait...";
+  await navigator.share({
+      title: "BBB-987 要保書.pdf",
+      text: "極速超跑要保書線上簽署",
+      url: "https://www.topspeed.com.tw/",
+  });
 }
 
 </script>
