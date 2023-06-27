@@ -213,8 +213,7 @@ text_btn.addEventListener('click', shareText, false)
 async function shareText(){
   document.getElementById("msg").innerHTML = "on share text... wait...";
   await navigator.share({
-      title: "BBB-987 要保書.pdf",
-      text: "極速超跑要保書線上簽署",
+      text: "BBB-987 要保書.pdf 線上簽署",
       url: "https://www.topspeed.com.tw/",
   });
 }
