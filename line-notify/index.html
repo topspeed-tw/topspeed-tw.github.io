@@ -4,11 +4,11 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>用戶資料綁定</title>
+        <title>通知功能開通</title>
     </head>
     <body class="flex justify-center items-center min-h-screen bg-gray-100">
         <div class="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
-          <h2 class="text-2xl font-bold text-gray-700 mb-4">用戶資料綁定</h2>
+          <h2 class="text-2xl font-bold text-gray-700 mb-4">通知功能開通</h2>
 
           <form id="registerForm" class="mt-4">
             <div class="mb-3">
@@ -36,7 +36,13 @@
               <input type="email" name="email" class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300">
             </div>
 
-            <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition">開通通知功能</button>
+            <button id="submitButton" type="submit" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition flex items-center">
+                <span>開通通知功能</span>
+                <svg id="loadingSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3-3-3h4z"></path>
+                </svg>
+            </button>
           </form>
 
 
@@ -78,26 +84,39 @@
             });
 
             document.getElementById("registerForm")?.addEventListener("submit", function(event) {
-              event.preventDefault();
-              var formData = new FormData(this);
-              var jsonData = {};
-              formData.forEach((value, key) => { jsonData[key] = value; });
+                event.preventDefault();
 
-              fetch("https://script.google.com/macros/s/"+SCRIPT_ID+"/exec", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8",
-                },
-                redirect: "follow",
-                body: JSON.stringify({ action: "addCustomer", ...jsonData })
-              })
-              .then(function(response){
-                alert('完成登錄');
-              })
-              .catch(function(error){
-                alert(error.status)
-              });
+                // 顯示讀取動畫並禁用按鈕
+                document.getElementById("loadingSpinner").classList.remove("hidden");
+                document.getElementById("submitButton").disabled = true;
+                document.getElementById("submitButton").innerText = "處理中...";
+
+                var formData = new FormData(this);
+                var jsonData = {};
+                formData.forEach((value, key) => { jsonData[key] = value; });
+
+                fetch("https://script.google.com/macros/s/"+SCRIPT_ID+"/exec", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8",
+                    },
+                    redirect: "follow",
+                    body: JSON.stringify({ action: "addCustomer", ...jsonData })
+                })
+                .then(function(response){
+                    alert('完成登錄');
+                })
+                .catch(function(error){
+                    alert(error.status);
+                })
+                .finally(() => {
+                    // 隱藏讀取動畫並恢復按鈕
+                    document.getElementById("loadingSpinner").classList.add("hidden");
+                    document.getElementById("submitButton").disabled = false;
+                    document.getElementById("submitButton").innerText = "開通通知功能";
+                });
             });
+
 
         });
         </script>
