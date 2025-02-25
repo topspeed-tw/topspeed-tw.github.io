@@ -57,7 +57,7 @@
             $("[name=customer_code]").val(customer_code);
 
             liff.init({
-                liffId: "2006956005-YyZB3Nw2",
+                liffId: LINE_LIFF_ID,
                 withLoginOnExternalBrowser: true,
             })
             .then(() => {
@@ -72,7 +72,6 @@
             })
             .then(profile => {
                 if (profile) {
-                    alert("使用者名稱：" + profile.displayName);
                     $("[name=name]").val(profile.displayName);
                     $("[name=user_id]").val(profile.userId);
                 }
@@ -91,6 +90,7 @@
 
               fetch("https://script.google.com/macros/s/"+SCRIPT_ID+"/exec", {
                 method: "POST",
+                mode: "no-cors", // 避免 CORS 錯誤
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "addCustomer", ...jsonData })
               })
