@@ -1,0 +1,93 @@
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha512-DUC8yqWf7ez3JD1jszxCWSVB0DMP78eOyBpMa5aJki1bIRARykviOuImIczkxlj1KhVSyS16w2FSQetkD4UU2w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>用戶資料綁定</title>
+    </head>
+    <body class="flex justify-center items-center min-h-screen bg-gray-100">
+        <div class="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
+          <h2 class="text-2xl font-bold text-gray-700 mb-4">用戶資料綁定</h2>
+
+          <form id="registerForm" class="mt-4">
+            <div class="mb-3">
+              <label class="block text-gray-600 text-left">頻道代碼 *</label>
+              <input type="text" name="customer_code" required class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300" value="${customer_code}" disabled>
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-gray-600 text-left">用戶代碼 *</label>
+              <input type="text" name="user_id" required class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300" value="" disabled>
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-gray-600 text-left">姓名 / 暱稱 *</label>
+              <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300">
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-gray-600 text-left">電話</label>
+              <input type="tel" name="phone" class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300">
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-gray-600 text-left">Email</label>
+              <input type="email" name="email" class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300">
+            </div>
+
+            <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition">開通通知功能</button>
+          </form>
+
+
+          <p id="statusMessage" class="text-sm text-gray-500 mt-4"></p>
+        </div>
+
+        <script>
+
+        $(document).ready(function(){
+            liff.init({
+                liffId: "2006956005-YyZB3Nw2",
+                withLoginOnExternalBrowser: true,
+            })
+            .then(() => {
+                alert('LIFF 初始化成功');
+                if (!liff.isLoggedIn()) {
+                    alert('使用者未登入，自動登入中...');
+                    liff.login();
+                } else {
+                    alert('使用者已登入');
+                    return liff.getProfile();
+                }
+            })
+            .then(profile => {
+                if (profile) {
+                    alert("使用者名稱：" + profile.displayName);
+                    $("[name=name]").val(profile.displayName);
+                    $("[name=user_id]").val(profile.userId);
+                }
+            })
+            .catch(err => {
+                alert("LIFF 初始化錯誤：" + err.message);
+            });
+
+            document.getElementById("registerForm")?.addEventListener("submit", function(event) {
+              event.preventDefault();
+              var formData = new FormData(this);
+              var jsonData = {};
+              formData.forEach((value, key) => { jsonData[key] = value; });
+
+              fetch("${SCRIPT_URL}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "addCustomer", ...jsonData })
+              })
+              .then(response => response.text())
+              .then(result => document.getElementById("statusMessage").innerText = result)
+              .catch(error => document.getElementById("statusMessage").innerText = "❌ 發生錯誤：" + error);
+            });
+
+        });
+        </script>
+    </body>
+</html>
