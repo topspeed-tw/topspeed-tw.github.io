@@ -13,7 +13,7 @@
           <form id="registerForm" class="mt-4">
             <div class="mb-3">
               <label class="block text-gray-600 text-left">頻道代碼 *</label>
-              <input type="text" name="customer_code" required class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300" value="${customer_code}" disabled>
+              <input type="text" name="customer_code" required class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-green-300" value="" disabled>
             </div>
 
             <div class="mb-3">
@@ -46,17 +46,27 @@
         <script>
 
         $(document).ready(function(){
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // 取得個別參數的值
+            const customer_code = urlParams.get("customer_code");
+            const LINE_LIFF_ID = urlParams.get("LINE_LIFF_ID");
+            const SCRIPT_ID = urlParams.get("SCRIPT_ID");
+
+            $("[name=customer_code]").val(customer_code);
+
             liff.init({
                 liffId: "2006956005-YyZB3Nw2",
                 withLoginOnExternalBrowser: true,
             })
             .then(() => {
-                alert('LIFF 初始化成功');
+                // alert('LIFF 初始化成功');
                 if (!liff.isLoggedIn()) {
-                    alert('使用者未登入，自動登入中...');
+                    // alert('使用者未登入，自動登入中...');
                     liff.login();
                 } else {
-                    alert('使用者已登入');
+                    // alert('使用者已登入');
                     return liff.getProfile();
                 }
             })
@@ -76,8 +86,10 @@
               var formData = new FormData(this);
               var jsonData = {};
               formData.forEach((value, key) => { jsonData[key] = value; });
+              
+              
 
-              fetch("${SCRIPT_URL}", {
+              fetch("https://script.google.com/macros/s/"+SCRIPT_ID+"/exec", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "addCustomer", ...jsonData })
