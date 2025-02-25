@@ -61,12 +61,9 @@
                 withLoginOnExternalBrowser: true,
             })
             .then(() => {
-                // alert('LIFF 初始化成功');
                 if (!liff.isLoggedIn()) {
-                    // alert('使用者未登入，自動登入中...');
                     liff.login();
                 } else {
-                    // alert('使用者已登入');
                     return liff.getProfile();
                 }
             })
@@ -85,18 +82,21 @@
               var formData = new FormData(this);
               var jsonData = {};
               formData.forEach((value, key) => { jsonData[key] = value; });
-              
-              
 
               fetch("https://script.google.com/macros/s/"+SCRIPT_ID+"/exec", {
                 method: "POST",
-                mode: "no-cors", // 避免 CORS 錯誤
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                },
+                redirect: "follow",
                 body: JSON.stringify({ action: "addCustomer", ...jsonData })
               })
-              .then(response => response.text())
-              .then(result => document.getElementById("statusMessage").innerText = result)
-              .catch(error => document.getElementById("statusMessage").innerText = "❌ 發生錯誤：" + error);
+              .then(function(response){
+                alert('完成登錄');
+              })
+              .catch(function(error){
+                alert(error)
+              });
             });
 
         });
