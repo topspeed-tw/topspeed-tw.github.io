@@ -104,6 +104,13 @@
                     body: JSON.stringify({ action: "addCustomer", ...jsonData })
                 })
                 .then(function(response){
+                    try {
+                        liff.closeWindow();  
+                        window.close(); 
+                    } catch (error) {
+                        Swal.close();
+                    }
+                    
                     alert('完成登錄');
                 })
                 .catch(function(error){
