@@ -115,6 +115,10 @@
                 })
                 .catch(function(error){
                     alert(error.status);
+                    // 隱藏讀取動畫並恢復按鈕
+                    document.getElementById("loadingSpinner").classList.add("hidden");
+                    document.getElementById("submitButton").disabled = false;
+                    document.getElementById("submitButton").innerText = "開通通知功能";
                 })
                 .finally(() => {
                     // 隱藏讀取動畫並恢復按鈕
