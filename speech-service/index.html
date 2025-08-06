@@ -3,130 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 影音客服</title>
+    <title>AI 影音客服 (定位優化)</title>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .chat-container {
-            width: 400px;
-            height: 700px; /* 增加高度以容納影片 */
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* 防止子元素溢出圆角 */
-        }
+        body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .chat-container { width: 400px; height: 700px; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* +++ 核心修改：使用絕對定位讓圖片和影片疊加 +++ */
         .video-container {
             width: 100%;
+            /* 設定一個固定的長寬比，例如 16:9，高度會根據寬度自動計算 */
+            aspect-ratio: 16 / 9; 
+            position: relative; /* 建立定位基準 */
             background-color: #000;
         }
-        #ai-video {
+        
+        #ai-image, #ai-video {
+            position: absolute; /* 讓元素脫離文檔流，相對於 video-container 定位 */
+            top: 0;
+            left: 0;
             width: 100%;
-            height: auto;
-            display: block;
+            height: 100%;
+            object-fit: cover; /* 填滿容器，保持長寬比，可能會裁切 */
         }
-        .chat-messages {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            background-color: #f5f7fa;
-        }
-        .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 20px;
-            max-width: 75%;
-            word-wrap: break-word;
-            line-height: 1.4;
-        }
-        .user-message {
-            background-color: #007bff;
-            color: white;
-            align-self: flex-end;
-        }
-        .bot-message {
-            background-color: #e9e9eb;
-            color: #000;
-            align-self: flex-start;
-        }
-        .chat-input-area {
-            padding: 20px 15px;
-            border-top: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px; /* 按鈕和輸入框之間的間距 */
-        }
-        #voice-input-btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 70px; /* 放大按鈕 */
-            height: 70px; /* 放大按鈕 */
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 32px; /* 放大圖示 */
-            flex-shrink: 0;
-            transition: background-color 0.2s;
-        }
-        #voice-input-btn:hover {
-            background-color: #0056b3;
-        }
-        .text-input-container {
-            display: flex;
-            width: 100%;
-            gap: 10px;
-        }
-        #message-input {
-            flex-grow: 1;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            padding: 10px 15px;
-            font-size: 14px;
-        }
-        #send-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
+
+        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; background-color: #f5f7fa; }
+        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 20px; max-width: 75%; word-wrap: break-word; line-height: 1.4; }
+        .user-message { background-color: #007bff; color: white; align-self: flex-end; }
+        .bot-message { background-color: #e9e9eb; color: #000; align-self: flex-start; }
+        .chat-input-area { padding: 20px 15px; border-top: 1px solid #ddd; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        #voice-input-btn { background-color: #007bff; color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 32px; flex-shrink: 0; transition: background-color 0.2s; }
+        #voice-input-btn:hover { background-color: #0056b3; }
+        .text-input-container { display: flex; width: 100%; gap: 10px; }
+        #message-input { flex-grow: 1; border: 1px solid #ccc; border-radius: 20px; padding: 10px 15px; font-size: 14px; }
+        #send-btn { background-color: #28a745; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 18px; flex-shrink: 0; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
     </style>
 </head>
 <body>
 
     <div class="chat-container">
         <div class="video-container">
-            <!-- 
-              注意：這是一個預錄的影片來示意 AI 頭像。
-              您可以替換成您自己的影片檔案。
-              真實的即時 AI 影片生成需要串接專門的服務。
-            -->
-            <video id="ai-video" src="https://videos.pexels.com/video-files/8328434/8328434-sd_640_360_30fps.mp4" playsinline muted loop></video>
+            <!-- HTML 結構不變，CSS 會處理它們的疊加 -->
+            <img id="ai-image" src="image.png" alt="AI客服頭像">
+            <video id="ai-video" src="video.mp4" playsinline muted loop hidden></video>
         </div>
-        <div class="chat-messages" id="chat-messages">
-            <!-- 對話內容會被動態加入這裡 -->
-        </div>
+        <div class="chat-messages" id="chat-messages"></div>
         <div class="chat-input-area">
             <button id="voice-input-btn" title="語音輸入">🎤</button>
             <div class="text-input-container">
@@ -135,150 +56,109 @@
             </div>
         </div>
     </div>
+    
+    <audio id="audio-unlocker" class="visually-hidden" src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKrIE5DSCBTb2Z0d2FyZQBUSUNSAAAACgAAADU0MzU1RgBUTEFOAAgAAANlbmcD"></audio>
 
     <script>
-        // --- 元素獲取 ---
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         const voiceInputBtn = document.getElementById('voice-input-btn');
+        const aiImage = document.getElementById('ai-image');
         const aiVideo = document.getElementById('ai-video');
+        const audioUnlocker = document.getElementById('audio-unlocker');
 
         // --- Gemini API 設定 ---
-        // !!! 請務必替換成您自己的 API 金鑰 !!!
         const API_KEY = 'AIzaSyD7esrBZHkFnVKW3R3Tfij3sHgtH3Jjg_E';
-        const MODEL_NAME = "gemini-2.5-flash";
-
-        // --- AI 系統指示 ---
+        const MODEL_NAME = "gemini-1.5-flash";
         const SYSTEM_INSTRUCTION = "你是一個專業的汽車保險客服專員，任職於台灣的極速超跑保險。你的任務是只回答與汽車保險相關的問題。如果使用者詢問任何其他話題(例如：天氣、食譜、運動、寫程式)，你必須禮貌地拒絕，並說明你只能處理汽車保險的諮詢。請保持友善和專業的語氣。對話請使用繁體中文。 每次回覆文字長度盡量不要超過80個中文字";
 
-        // --- 對話歷史紀錄 ---
         let conversationHistory = [];
+        let isRecognizing = false;
+        let isAudioUnlocked = false;
 
-        // --- 頁面載入時的初始動作 ---
+        function unlockAudio() {
+            if (isAudioUnlocked) return;
+            audioUnlocker.play().then(() => { isAudioUnlocked = true; }).catch(() => { isAudioUnlocked = true; });
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             const initialBotMessage = '您好！請問有什麼汽車保險相關問題我可以為您解答嗎？';
             appendMessage(initialBotMessage, 'bot-message');
             conversationHistory.push({ role: 'model', parts: [{ text: initialBotMessage }] });
-            // 初始時影片是暫停的
-            aiVideo.pause();
         });
 
-        // --- 事件監聽 ---
-        sendBtn.addEventListener('click', handleSendMessage);
-        messageInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleSendMessage());
+        sendBtn.addEventListener('click', () => { unlockAudio(); handleSendMessage(); });
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { unlockAudio(); handleSendMessage(); } });
 
-        // --- 語音輸入 & 文字轉語音 (Web Speech API) ---
         const speechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
         const speechSynthesis = window.speechSynthesis;
 
         if (speechRecognition) {
             const recognition = new speechRecognition();
-            recognition.continuous = false;
-            recognition.lang = 'zh-TW';
-
-            voiceInputBtn.addEventListener('click', () => {
-                recognition.start();
-                voiceInputBtn.textContent = '...';
-                voiceInputBtn.style.backgroundColor = '#dc3545'; // 變色提示錄音中
-            });
-
-            recognition.onresult = (event) => {
-                messageInput.value = event.results[0][0].transcript;
-                handleSendMessage(); // 辨識完畢後自動送出
-            };
-
-            recognition.onerror = (event) => {
-                console.error('語音辨識錯誤:', event.error);
-                alert('語音辨識失敗，請檢查麥克風權限或瀏覽器支援。');
-            };
-
-            recognition.onend = () => {
-                voiceInputBtn.textContent = '🎤';
-                voiceInputBtn.style.backgroundColor = '#007bff';
-            };
-
+            recognition.continuous = false; recognition.lang = 'zh-TW';
+            voiceInputBtn.addEventListener('click', () => { unlockAudio(); if (isRecognizing) return; recognition.start(); });
+            recognition.onstart = () => { isRecognizing = true; voiceInputBtn.textContent = '...'; voiceInputBtn.style.backgroundColor = '#dc3545'; };
+            recognition.onresult = (event) => { messageInput.value = event.results[0][0].transcript; handleSendMessage(); };
+            recognition.onerror = (event) => { console.error('語音辨識錯誤:', event.error); };
+            recognition.onend = () => { isRecognizing = false; voiceInputBtn.textContent = '🎤'; voiceInputBtn.style.backgroundColor = '#007bff'; };
         } else {
             voiceInputBtn.style.display = 'none';
-            console.log('您的瀏覽器不支援語音輸入功能。');
         }
-
-        // --- 核心功能函式 ---
 
         function handleSendMessage() {
             const userMessageText = messageInput.value.trim();
             if (userMessageText === '') return;
-
             appendMessage(userMessageText, 'user-message');
             conversationHistory.push({ role: 'user', parts: [{ text: userMessageText }] });
             messageInput.value = '';
-            
-            // 顯示載入中的提示
             const loadingElement = appendMessage('...', 'bot-message');
-            loadingElement.id = 'loading-indicator';
-
             getGeminiResponse(loadingElement);
         }
 
         async function getGeminiResponse(loadingElement) {
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
             try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        "contents": conversationHistory,
-                        "systemInstruction": { "parts": [{ "text": SYSTEM_INSTRUCTION }] }
-                    }),
-                });
-
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ "contents": conversationHistory, "systemInstruction": { "parts": [{ "text": SYSTEM_INSTRUCTION }] } }), });
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
-                
-                // 移除"..."載入提示
                 loadingElement.remove();
-
                 if (data.candidates && data.candidates.length > 0) {
                     const botMessageText = data.candidates[0].content.parts[0].text;
                     appendMessage(botMessageText, 'bot-message');
                     conversationHistory.push({ role: 'model', parts: [{ text: botMessageText }] });
-                    
-                    // *** 觸發語音和影片 ***
                     speakTextAndPlayVideo(botMessageText);
-                } else {
-                    handleApiError('抱歉，AI 沒有回傳有效的內容。');
-                }
-            } catch (error) {
-                loadingElement.remove();
-                console.error('Gemini API 呼叫失敗:', error);
-                handleApiError('抱歉，連線發生錯誤，請稍後再試。');
-            }
+                } else { handleApiError('抱歉，AI 沒有回傳有效的內容。'); }
+            } catch (error) { loadingElement.remove(); console.error('Gemini API 呼叫失敗:', error); handleApiError('抱歉，連線發生錯誤，請稍後再試。'); }
         }
         
+        // JavaScript 邏輯不變，但現在它控制的是疊加層的顯示/隱藏，效果更佳
         function speakTextAndPlayVideo(text) {
-            if (!speechSynthesis) {
-                console.log('您的瀏覽器不支援語音合成功能。');
-                return;
-            }
-            // 停止之前可能還在播放的語音
+            unlockAudio();
+            if (!speechSynthesis) return;
             speechSynthesis.cancel();
             
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'zh-TW';
-            utterance.rate = 1; // 語速
-            utterance.pitch = 1; // 音高
+            utterance.rate = 1;
+            utterance.pitch = 1;
 
             utterance.onstart = () => {
-                aiVideo.play(); // 語音開始時，播放影片
+                aiImage.hidden = true;
+                aiVideo.hidden = false;
+                aiVideo.play();
             };
 
-            utterance.onend = () => {
-                aiVideo.pause(); // 語音結束時，暫停影片
+            const onSpeechEnd = () => {
+                aiVideo.pause();
+                aiVideo.hidden = true;
+                aiImage.hidden = false;
             };
-            
+
+            utterance.onend = onSpeechEnd;
             utterance.onerror = (event) => {
                 console.error('語音合成錯誤:', event.error);
-                aiVideo.pause(); // 如果出錯也暫停影片
+                onSpeechEnd();
             };
 
             speechSynthesis.speak(utterance);
