@@ -61,7 +61,13 @@ details summary { cursor:pointer; color:#3498db; font-size:12px; }
 .history-list { margin-top:6px; padding-left:14px; font-size:12px; color:#7f8c8d; }
 .history-list li { margin:3px 0; }
 .muted { color:#bdc3c7; }
-.action-cell { display:flex; gap:4px; flex-wrap:wrap; }
+.action-cell { display:flex; gap:4px; flex-wrap:wrap; min-width: 145px;}
+
+/* 員工持有設備清單 */
+.dev-list { display:flex; flex-direction:column; gap:6px; min-width:260px; }
+.dev-item { display:flex; align-items:center; flex-wrap:wrap; gap:4px; padding:6px 8px; background:#f8fafc; border-left:3px solid #3498db; border-radius:4px; font-size:12.5px; }
+.dev-item strong { color:#2c3e50; font-family:'Consolas','Microsoft JhengHei',monospace; }
+.dev-detail { color:#7f8c8d; font-size:11.5px; margin-left:6px; }
 
 /* Setup screen */
 .setup { background:#fff; border-radius:10px; padding:40px; box-shadow:0 1px 3px rgba(0,0,0,.06); max-width:700px; margin:40px auto; }
@@ -383,7 +389,7 @@ function renderEquipment() {
   });
   rows.sort((a,b) => eqSort.dir * (a[eqSort.col]||'').toString().localeCompare((b[eqSort.col]||'').toString()));
   document.getElementById('eq-count').textContent = `共 ${rows.length} 筆`;
-  const cols = ['設備編號','設備類型','使用者','保管狀態','單位部門','狀態','購買日期','購買價格(NTD)','設備明細','目前位置'];
+  const cols = ['設備編號','設備類型','使用者','單位部門','狀態','購買日期','購買價格(NTD)','設備明細','目前位置'];
   let html = '<thead><tr>';
   cols.forEach(c => html += `<th data-col="${c}">${c}${eqSort.col===c ? (eqSort.dir>0?' ↑':' ↓'):''}</th>`);
   html += '<th>異動歷史</th><th>操作</th></tr></thead><tbody>';
@@ -391,8 +397,8 @@ function renderEquipment() {
     html += '<tr>';
     html += `<td data-label="設備編號"><strong>${escapeHtml(d.設備編號)}</strong></td>`;
     html += `<td data-label="類型">${badge(d.設備類型, typeBadgeCls(d.設備類型))}</td>`;
-    html += `<td data-label="使用者">${escapeHtml(d.使用者)||'<span class="muted">—</span>'}</td>`;
-    html += `<td data-label="保管狀態">${badge(d.保管狀態, holdCls(d.保管狀態))}</td>`;
+    const _userHoldMark = d.保管狀態 === '保管中' ? ' <span class="badge b-yellow">🔒保管</span>' : '';
+    html += `<td data-label="使用者">${escapeHtml(d.使用者)||'<span class="muted">—</span>'}${_userHoldMark}</td>`;
     html += `<td data-label="部門">${escapeHtml(d.單位部門)||'<span class="muted">—</span>'}</td>`;
     html += `<td data-label="狀態">${badge(d.狀態, statusCls(d.狀態))}</td>`;
     html += `<td data-label="購買日期">${escapeHtml(d.購買日期)||'<span class="muted">—</span>'}</td>`;
@@ -417,7 +423,7 @@ function renderEquipment() {
     </td>`;
     html += '</tr>';
   });
-  if (!rows.length) html += '<tr class="empty-row"><td colspan="13" class="empty">沒有符合的設備</td></tr>';
+  if (!rows.length) html += '<tr class="empty-row"><td colspan="11" class="empty">沒有符合的設備</td></tr>';
   html += '</tbody>';
   document.getElementById('eq-table').innerHTML = html;
   document.querySelectorAll('#eq-table th').forEach(th => {
@@ -442,11 +448,27 @@ function renderEmployees() {
   let html = '<thead><tr><th>姓名</th><th>部門</th><th>在職狀態</th><th>持有設備數</th><th>持有設備</th><th>操作</th></tr></thead><tbody>';
   rows.forEach(e => {
     const devs = devicesByEmployee[e.姓名] || [];
+    const _hasHold = devs.some(d => d.保管狀態 === '保管中');
+    const _holdSummaryMark = _hasHold ? ' <span class="badge b-yellow" style="font-size:10px">🔒含保管</span>' : '';
+    const devCellHtml = devs.length
+      ? '<details><summary>展開 ' + devs.length + ' 台' + _holdSummaryMark + '</summary>'
+        + '<div class="dev-list" style="margin-top:6px">' + devs.map(d => {
+          const hold = d.保管狀態 === '保管中'
+            ? '<span class="badge b-yellow" style="margin-left:6px">🔒保管</span>'
+            : '';
+          return '<div class="dev-item">'
+            + '<strong>' + escapeHtml(d.設備編號) + '</strong>'
+            + ' <span class="badge ' + typeBadgeCls(d.設備類型) + '">' + escapeHtml(d.設備類型) + '</span>'
+            + hold
+            + (d.設備明細 ? '<span class="dev-detail">' + escapeHtml(d.設備明細) + '</span>' : '')
+            + '</div>';
+        }).join('') + '</div></details>'
+      : '<span class="muted">無</span>';
     html += `<tr><td data-label="姓名"><strong>${escapeHtml(e.姓名)}</strong></td>
       <td data-label="部門">${escapeHtml(e.部門)||'<span class="muted">—</span>'}</td>
       <td data-label="狀態">${badge(normJob(e.在職狀態), e.在職狀態==='在職'?'b-green':'b-gray')}</td>
       <td data-label="設備數">${devs.length}</td>
-      <td data-label="持有設備">${devs.length ? devs.map(d => escapeHtml(d.設備編號)+' ('+escapeHtml(d.設備類型)+')').join(', ') : '<span class="muted">無</span>'}</td>
+      <td data-label="持有設備">${devCellHtml}</td>
       <td class="action-cell">
         <button class="btn btn-sm" onclick="openEditEmployee('${escapeAttr(e.姓名)}')">編輯</button>
         ${devs.length === 0 ? `<button class="btn btn-sm btn-danger" onclick="deleteEmployee('${escapeAttr(e.姓名)}')">刪除</button>` : ''}
@@ -1046,18 +1068,41 @@ const _STYLE_LEFT_WRAP = {alignment:{horizontal:'left', vertical:'center', wrapT
 const _STYLE_NOTE_HOLD = {font:{italic:true, sz:10, color:{rgb:'888888'}}, alignment:{horizontal:'left'}};
 const _STYLE_STAT_HEADER = {font:{bold:true, color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'4A90E2'}}, alignment:{horizontal:'center', vertical:'center'}, border:_BORDER};
 const _STYLE_STAT_LABEL = {font:{bold:true}, fill:{fgColor:{rgb:'EAF4FC'}}, alignment:{horizontal:'center', vertical:'center'}, border:_BORDER};
+// 「統計」抬頭文字 — 無底色、無框線
+const _STYLE_STAT_TITLE = {font:{bold:true, sz:12, color:{rgb:'2C3E50'}}, alignment:{horizontal:'center', vertical:'center'}};
 const _STYLE_STAT_NUM = {fill:{fgColor:{rgb:'F8FAFC'}}, alignment:{horizontal:'center', vertical:'center'}, border:_BORDER};
 const _STYLE_STAT_TOTAL = {font:{bold:true, color:{rgb:'C0392B'}}, fill:{fgColor:{rgb:'FEF3C7'}}, alignment:{horizontal:'center', vertical:'center'}, border:_BORDER};
 const _STYLE_SIGN_TEXT = {font:{bold:true, sz:12}, alignment:{horizontal:'left', vertical:'center'}};
 const _STYLE_SIGN_LINE = {border:{bottom:{style:'thin', color:{rgb:'000000'}}}};
 
-// 畫簽章:標籤一行,下面一條底線跨 span 格
-function _drawSignature(ws, row, col, span) {
-  span = span || 5;
+// 畫簽章:標籤位於 col,底線從 col+1 延伸到 maxCol(含)
+// 底線不會覆蓋到「主管簽章」標籤格,也不會超過表格最後一欄(maxCol)
+function _drawSignature(ws, row, col, maxCol) {
   _setCell(ws, _ref(row, col), '主管簽章', _STYLE_SIGN_TEXT);
-  for (let c = col; c < col + span; c++) {
+  for (let c = col + 1; c <= maxCol; c++) {
     _setCell(ws, _ref(row + 1, c), '', _STYLE_SIGN_LINE);
   }
+}
+
+// 列印設定:預設橫式 + 水平/垂直置中
+// 同時設定多個可能的屬性名稱以提高跨版本相容性
+function _applyPrintLayout(ws) {
+  ws['!margins'] = { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 };
+  // 橫式 A4(paperSize: 9 = A4)
+  ws['!pageSetup'] = {
+    orientation: 'landscape',
+    paperSize: 9,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    scale: 100,
+    // 部分版本以這個屬性讀取
+    horizontalCentered: 1,
+    verticalCentered: 1
+  };
+  // 列印置中(標準 SheetJS / xlsx-js-style 寫入 <printOptions>)
+  ws['!printOptions'] = { horizontalCentered: true, verticalCentered: true };
+  // 強制以橫式呈現(預備鍵,部分 fork 會讀取)
+  ws['!sheetPr'] = ws['!sheetPr'] || {};
 }
 
 function _setCell(ws, ref, value, style) {
@@ -1150,7 +1195,8 @@ function buildDeptSheet(deptName, items, today) {
   // 統計區佈局:單欄(<=3 類型)或雙欄(>=4 類型)
   const useDoubleCol = typeCounts.length >= 4;
 
-  _setCell(ws, _ref(rowIdx, 0), '統計', _STYLE_STAT_LABEL);
+  // 「統計」抬頭使用純文字樣式(無底色、無框線)
+  _setCell(ws, _ref(rowIdx, 0), '統計', _STYLE_STAT_TITLE);
   _setCell(ws, _ref(rowIdx, 1), '項目', _STYLE_STAT_HEADER);
   _setCell(ws, _ref(rowIdx, 2), '數量', _STYLE_STAT_HEADER);
   if (useDoubleCol) {
@@ -1181,22 +1227,27 @@ function buildDeptSheet(deptName, items, today) {
     rowIdx++;
   }
 
-  // 主管簽章區(右邊,標籤+底線)
-  const signCol = useDoubleCol ? 5 : 4;  // F or E (起始欄)
-  _drawSignature(ws, statsStart + Math.floor(maxStatRows / 2), signCol, 4);
+  // 主管簽章區:放在統計區「右邊」,與統計區垂直置中對齊
+  // 統計區佔用的欄位:單欄=0~2,雙欄=0~4。簽章標籤緊接其後,底線延伸至 NCOL-1
+  const signLabelCol = useDoubleCol ? 5 : 3;
+  const signRow = statsStart + Math.max(0, Math.floor(maxStatRows / 2));
+  _drawSignature(ws, signRow, signLabelCol, NCOL - 1);
+  // 簽章佔據 signRow 與 signRow+1 兩列,讓最終範圍包含到底線那列
+  if (rowIdx < signRow + 2) rowIdx = signRow + 2;
 
-  // 設定範圍與合併
-  const totalCols = Math.max(NCOL, signCol + 4);
-  _setRange(ws, 0, 0, rowIdx, totalCols - 1);
+  // 設定範圍與合併:標題合併僅跨表格欄位寬度(0 ~ NCOL-1),不超出
+  _setRange(ws, 0, 0, rowIdx, NCOL - 1);
   ws['!merges'] = [
-    {s:{r:0,c:0}, e:{r:0,c:totalCols-1}}  // 標題列合併
+    {s:{r:0,c:0}, e:{r:0,c:NCOL-1}}  // 標題列合併,僅跨表格欄位寬度
   ];
   ws['!cols'] = [
     {wch: 12}, {wch: 12}, {wch: 14}, {wch: 14},
-    {wch: 12}, {wch: 12}, {wch: 32},
-    {wch: 12}, {wch: 12}
+    {wch: 12}, {wch: 12}, {wch: 32}
   ];
   ws['!rows'] = [{hpt: 28}];  // 標題列高度
+
+  // 列印時水平+垂直置中
+  _applyPrintLayout(ws);
 
   return ws;
 }
@@ -1233,14 +1284,18 @@ function buildStatsSheet(byDept, today) {
   _setCell(ws, _ref(rowIdx, NCOL-1), grandTotal, _STYLE_STAT_TOTAL);
   rowIdx++;
 
-  // 主管簽章
+  // 主管簽章:標籤位於 NCOL-5 欄,底線延伸到表格最後一欄(不覆蓋標籤、不超出表格)
   rowIdx += 3;
-  _drawSignature(ws, rowIdx, 4, 4);
+  const signLabelCol = Math.max(0, NCOL - 5);
+  _drawSignature(ws, rowIdx, signLabelCol, NCOL - 1);
 
   _setRange(ws, 0, 0, rowIdx+1, NCOL-1);
   ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:NCOL-1}}];
   ws['!cols'] = [{wch: 14}, ..._EXPORT_TYPES.map(()=>({wch: 11})), {wch: 10}];
   ws['!rows'] = [{hpt: 28}];
+
+  // 列印時水平+垂直置中
+  _applyPrintLayout(ws);
   return ws;
 }
 
