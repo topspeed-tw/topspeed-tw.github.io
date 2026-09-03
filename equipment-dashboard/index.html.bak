@@ -54,11 +54,6 @@ tr:hover td { background:#fafbfd; }
 .btn-success:hover { background:#1e8449; }
 .btn-warning { background:#f39c12; }
 .btn-warning:hover { background:#d68910; }
-.btn-toggle { background:#fff; color:#7f8c8d; border:1px solid #dde2e8; }
-.btn-toggle:hover { background:#f4f6f9; color:#2c3e50; }
-.btn-toggle.on { background:#3498db; color:#fff; border-color:#3498db; }
-.btn-toggle.on:hover { background:#2980b9; }
-.btn-toggle:disabled { opacity:.45; cursor:not-allowed; }
 .empty { text-align:center; color:#bdc3c7; padding:40px; }
 .scroll { overflow-x:auto; }
 details { margin:6px 0; }
@@ -237,7 +232,6 @@ details summary { cursor:pointer; color:#3498db; font-size:12px; }
     <select id="eq-type"><option value="">所有類型</option></select>
     <select id="eq-status"><option value="">所有狀態</option></select>
     <select id="eq-dept"><option value="">所有部門</option></select>
-    <button class="btn btn-sm btn-toggle" id="eq-hide-scrapped" title="隱藏狀態為「已報廢」的設備">☐ 隱藏已報廢</button>
     <span class="count" id="eq-count"></span>
   </div>
   <div class="scroll"><table id="eq-table"></table></div>
@@ -253,7 +247,6 @@ details summary { cursor:pointer; color:#3498db; font-size:12px; }
       <option value="在職">在職</option>
       <option value="已離職">已離職</option>
     </select>
-    <button class="btn btn-sm btn-toggle" id="emp-hide-left" title="隱藏在職狀態為「已離職」的員工">☐ 隱藏已離職</button>
     <span class="count" id="emp-count"></span>
   </div>
   <div class="scroll"><table id="emp-table"></table></div>
@@ -301,8 +294,6 @@ details summary { cursor:pointer; color:#3498db; font-size:12px; }
 <script>
 // ============ State ============
 const SETTINGS_KEY = 'gsdb_equipment_settings_v1';
-const PREFS_KEY = 'gsdb_equipment_prefs_v1';
-let PREFS = { hideScrapped: true, hideLeft: true };
 let CONFIG = { url: '', key: '' };
 let DATA = { equipment: [], employees: [], events: [], types: [] };
 let eventsByDevice = {}, devicesByEmployee = {};
@@ -389,18 +380,15 @@ function renderEquipment() {
   const type = document.getElementById('eq-type').value;
   const status = document.getElementById('eq-status').value;
   const dept = document.getElementById('eq-dept').value;
-  let hiddenScrapped = 0;
   let rows = DATA.equipment.filter(d => {
     if (type && d.設備類型 !== type) return false;
     if (status && d.狀態 !== status) return false;
-    if (!status && PREFS.hideScrapped && d.狀態 === '已報廢') { hiddenScrapped++; return false; }
     if (dept && d.單位部門 !== dept) return false;
     if (q && ![d.設備編號, d.使用者, d.設備明細, d.目前位置, d.備註].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
   rows.sort((a,b) => eqSort.dir * (a[eqSort.col]||'').toString().localeCompare((b[eqSort.col]||'').toString()));
-  syncEqToggle();
-  document.getElementById('eq-count').textContent = `共 ${rows.length} 筆` + (hiddenScrapped ? `(已隱藏 ${hiddenScrapped} 筆報廢)` : '');
+  document.getElementById('eq-count').textContent = `共 ${rows.length} 筆`;
   const cols = ['設備編號','設備類型','使用者','單位部門','狀態','購買日期','購買價格(NTD)','設備明細','目前位置'];
   let html = '<thead><tr>';
   cols.forEach(c => html += `<th data-col="${c}">${c}${eqSort.col===c ? (eqSort.dir>0?' ↑':' ↓'):''}</th>`);
@@ -450,16 +438,13 @@ function renderEquipment() {
 function renderEmployees() {
   const q = document.getElementById('emp-search').value.toLowerCase().trim();
   const status = document.getElementById('emp-status').value;
-  let hiddenLeft = 0;
   let rows = DATA.employees.filter(e => {
     if (status && normJob(e.在職狀態) !== status) return false;
-    if (!status && PREFS.hideLeft && normJob(e.在職狀態) === '已離職') { hiddenLeft++; return false; }
     if (q && ![e.姓名, e.部門].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
   rows.sort((a,b) => (a.姓名||'').localeCompare(b.姓名||''));
-  syncEmpToggle();
-  document.getElementById('emp-count').textContent = `共 ${rows.length} 位` + (hiddenLeft ? `(已隱藏 ${hiddenLeft} 位離職)` : '');
+  document.getElementById('emp-count').textContent = `共 ${rows.length} 位`;
   let html = '<thead><tr><th>姓名</th><th>部門</th><th>在職狀態</th><th>持有設備數</th><th>持有設備</th><th>操作</th></tr></thead><tbody>';
   rows.forEach(e => {
     const devs = devicesByEmployee[e.姓名] || [];
@@ -1380,34 +1365,6 @@ function saveConfig() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(CONFIG));
 }
 
-// ============ 顯示偏好(隱藏已報廢 / 已離職) ============
-function loadPrefs() {
-  try {
-    const raw = localStorage.getItem(PREFS_KEY);
-    if (raw) PREFS = Object.assign(PREFS, JSON.parse(raw));
-  } catch(e) {}
-}
-function savePrefs() {
-  try { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); } catch(e) {}
-}
-// 下拉選單有指定狀態時,以下拉為準,按鈕暫時停用
-function syncEqToggle() {
-  const btn = document.getElementById('eq-hide-scrapped');
-  const locked = !!document.getElementById('eq-status').value;
-  btn.textContent = (PREFS.hideScrapped ? '☑' : '☐') + ' 隱藏已報廢';
-  btn.classList.toggle('on', PREFS.hideScrapped && !locked);
-  btn.disabled = locked;
-  btn.title = locked ? '已在「狀態」下拉選單指定狀態,以下拉選單為準' : '隱藏狀態為「已報廢」的設備';
-}
-function syncEmpToggle() {
-  const btn = document.getElementById('emp-hide-left');
-  const locked = !!document.getElementById('emp-status').value;
-  btn.textContent = (PREFS.hideLeft ? '☑' : '☐') + ' 隱藏已離職';
-  btn.classList.toggle('on', PREFS.hideLeft && !locked);
-  btn.disabled = locked;
-  btn.title = locked ? '已在「狀態」下拉選單指定狀態,以下拉選單為準' : '隱藏在職狀態為「已離職」的員工';
-}
-
 async function trySetup() {
   const url = document.getElementById('setup-url').value.trim();
   const key = document.getElementById('setup-key').value.trim();
@@ -1464,26 +1421,12 @@ document.querySelectorAll('.tab').forEach(t => {
   document.getElementById(id).addEventListener('change', renderEvents);
 });
 
-document.getElementById('eq-hide-scrapped').onclick = () => {
-  PREFS.hideScrapped = !PREFS.hideScrapped;
-  savePrefs();
-  renderEquipment();
-};
-document.getElementById('emp-hide-left').onclick = () => {
-  PREFS.hideLeft = !PREFS.hideLeft;
-  savePrefs();
-  renderEmployees();
-};
-
 document.getElementById('refresh-btn').onclick = refresh;
 document.getElementById('export-btn').onclick = exportExcel;
 document.getElementById('settings-btn').onclick = showSetup;
 document.getElementById('setup-btn').onclick = trySetup;
 
 loadConfig();
-loadPrefs();
-syncEqToggle();
-syncEmpToggle();
 if (CONFIG.url && CONFIG.key) {
   refresh().then(() => {
     if (DATA.equipment.length || DATA.employees.length) initDashboard();
